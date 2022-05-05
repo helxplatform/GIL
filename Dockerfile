@@ -16,7 +16,7 @@ RUN add-apt-repository -y ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y python3.8 python3-pip 
 RUN apt-get update && apt-get install -y python3-venv python3-dev 
 
-RUN python3 -m pip install --upgrade pip && python3 -m pip install tensorflow==2.4
+RUN python3 -m pip install --upgrade pip && python3 -m pip install tensorflow==2.8.0
 RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 
 #RUN apt-get update && apt-get install -y nvidia-smi
