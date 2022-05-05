@@ -164,19 +164,23 @@ def plot_confusion_matrix(cm, class_names, parameters_dict={}, title=''):
     return np.round(100 * specificity.mean(), 3), \
            np.round(100 * fallout.mean(), 3)
 
-def get_gpu_memory():
+def get_gpu_memory_usage():
     _output_to_list = lambda x: x.decode('ascii').split('\n')[:-1]
 
-    # ACCEPTABLE_AVAILABLE_MEMORY = 1024
     command = "nvidia-smi --query-gpu=memory.free --format=csv"
     memory_free_info = _output_to_list(sp.check_output(command.split()))[1:]
     memory_free_values = [int(x.split()[0]) for i, x in enumerate(memory_free_info)]
-    memory_sum = sum(memory_free_values)
+    memory_free = sum(memory_free_values)
 
-    return memory_sum
+    command = "nvidia-smi --query-gpu=memory.used --format=csv"
+    memory_used_info = _output_to_list(sp.check_output(command.split()))[1:]
+    memory_used_values = [int(x.split()[0]) for i, x in enumerate(memory_used_info)]
+    memory_used = sum(memory_used_values)
+
+    return memory_free, memory_used
 
 
-def get_model_memory_usage(batch_size, model):
+def get_model_memory_usage(model, batch_size=1):
     shapes_mem_count = 0
     internal_model_mem_count = 0
     for layer in model.layers:
@@ -203,6 +207,7 @@ def get_model_memory_usage(batch_size, model):
         number_size = 8.0
 
     total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
-    gbytes = np.round(total_memory / (1024.0 ** 3), 3) + internal_model_mem_count
 
-    return gbytes
+    model_bytes = int(total_memory + internal_model_mem_count)
+
+    return model_bytes
