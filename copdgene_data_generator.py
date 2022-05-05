@@ -102,6 +102,10 @@ def process_next_stack(file_list, label_list, file_index, height, width):
     img = sitk.ReadImage(file_list[file_index])
     # Convert to img_array
     img_array = sitk.GetArrayFromImage(img)
+    # Convert RGB to grayscale
+    if len(img_array.shape) == 4:
+        img = rgb2gray(img)
+        img_array = sitk.GetArrayFromImage(img)
     # Expand dimensions to create (depth, width, height, channel)
     img_array = np.expand_dims(img_array, 3)
     # Resize image array to target size
@@ -118,6 +122,14 @@ def process_next_stack(file_list, label_list, file_index, height, width):
         file_index = 0
 
     return img_array, img_label, file_index
+
+def rgb2gray(image):
+    # Convert sRGB image to gray scale and rescale results to [0,255]    
+    channels = [sitk.VectorIndexSelectionCast(image,i, sitk.sitkFloat32) for i in range(image.GetNumberOfComponentsPerPixel())]
+    #linear mapping
+    I = 1/255.0*(0.2989*channels[0] + 0.5870*channels[1] + 0.1140*channels[2])
+
+    return sitk.Cast(sitk.RescaleIntensity(I), sitk.sitkUInt8)
 
 
 def pull_random_nrrds(parent_dir, insp_exp='', std_sharp='', num_files=100):
