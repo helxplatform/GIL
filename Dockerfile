@@ -24,7 +24,7 @@ RUN python3 -m pip install --upgrade pip && python3 -m pip install pandas numpy 
 RUN python3 -m pip install --upgrade pip && python3 -m pip install matplotlib seaborn 
 RUN python3 -m pip install --upgrade pip && python3 -m pip install SimpleITK
 
-WORKDIR /opt
+WORKDIR /
 RUN git clone https://github.com/helxplatform/GIL.git
 
-COPY Dockerfile /opt
+COPY Dockerfile /
