@@ -27,4 +27,4 @@ RUN python3 -m pip install --upgrade pip && python3 -m pip install SimpleITK
 WORKDIR /
 RUN git clone https://github.com/helxplatform/GIL.git
 
-COPY Dockerfile /
+#COPY Dockerfile /
