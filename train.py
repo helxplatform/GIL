@@ -5,19 +5,48 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from vgg16 import VGG_16
-from copdgene_data_generator import get_image_set_size, batch_generator
-from utility import get_gpu_memory_usage, get_model_memory_usage
+from src.models import build_image_classifier
+from src.utility import get_max_batch_size
+from src.data_generator import ImageSet
 
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-print('Tensorflow version: ' + tf.__version__)
+def model_config():
+    """ Parse arguments and pull selected Keras application """
+    # Available Keras application models
+    model_dict = {
+        "densenet121": tf.keras.applications.DenseNet121,
+        "densenet169": tf.keras.applications.DenseNet169,
+        "densenet201": tf.keras.applications.DenseNet201,
+        "efficientnetb0": tf.keras.applications.EfficientNetB0,
+        "efficientnetb1": tf.keras.applications.EfficientNetB1,
+        "efficientnetb2": tf.keras.applications.EfficientNetB2,
+        "efficientnetb3": tf.keras.applications.EfficientNetB3,
+        "efficientnetb4": tf.keras.applications.EfficientNetB4,
+        "efficientnetb5": tf.keras.applications.EfficientNetB5,
+        "efficientnetb6": tf.keras.applications.EfficientNetB6,
+        "efficientnetb7": tf.keras.applications.EfficientNetB7,
+        "inceptionresnetv2": tf.keras.applications.InceptionResNetV2,
+        "inceptionv3": tf.keras.applications.InceptionV3,
+        "mobilenet": tf.keras.applications.MobileNet,
+        "mobilenetv2": tf.keras.applications.MobileNetV2,
+        "nasnetlarge": tf.keras.applications.NASNetLarge,
+        "nasnetmobile": tf.keras.applications.NASNetMobile,
+        "resnet101": tf.keras.applications.ResNet101,
+        "resnet101v2": tf.keras.applications.ResNet101V2,
+        "resnet152": tf.keras.applications.ResNet152,
+        "resnet152v2": tf.keras.applications.ResNet152V2,
+        "resnet50": tf.keras.applications.ResNet50,
+        "resnet50v2": tf.keras.applications.ResNet50V2,
+        "vgg16": tf.keras.applications.VGG16,
+        "vgg19": tf.keras.applications.VGG19,
+        "xception": tf.keras.applications.Xception
+    }
 
-def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_csv", required=True, metavar="CSV FILE", help="CSV file pointing to images" )
+    parser.add_argument("--data_csv", required=True, metavar="CSV FILE", help="CSV file pointing to images")
     parser.add_argument("--image_column", required=True, help="Column name for images")
     parser.add_argument("--label_column", required=True, help="Column name for labels")
+    parser.add_argument("--arch", required=True, choices=model_dict.keys(), help="Model architecture. Supports most Keras applications.")
     parser.add_argument("--test_ratio", help="Percentage for testing data. Default is 0.3 (30%)", type=float, default=0.3)
     parser.add_argument("--epochs", help="Number of epochs. Default is 15", type=int, default=15)
     parser.add_argument("--classes", help="Number of classes. If not specified, classes will be inferred from labels", type=int, default=None)
@@ -25,75 +54,78 @@ def main():
     parser.add_argument("--output", help="Specify file name for output. Default is 'model'", default='model')
     parser.add_argument("--auto_resize", help="Auto-resize to min height/width of image set", action="store_true")
     parser.add_argument("--auto_batch", help="Auto-detect max batch size. Selecting this will override any specified batch size", action="store_true")
-    parser.add_argument('--index_first', help="Set images to depth as the first index", action="store_true")
-    args = parser.parse_args()
+    parser.add_argument('--index_first', help="Set images to depth as the first index (uncommon)", action="store_true")
+    ARGS = parser.parse_args()
 
-    epochs = args.epochs
-    classes = args.classes
-    batch_size = args.batch_size
-    output = args.output
-    test_ratio = args.test_ratio
-    auto_resize = args.auto_resize
-    auto_batch = args.auto_batch
-    index_first = args.index_first
+    if ARGS.arch not in model_dict:
+        model_arch = None
+    else:
+        model_arch = model_dict[ARGS.arch]
 
-    # Point to images
-    image_list_file = args.data_csv
-    image_column = args.image_column
-    label_column = args.label_column
+    return ARGS, model_arch
 
-    # Pull the list of files
-    train_df = pd.read_csv(image_list_file)
-    images = train_df[image_column].to_list()
-    labels = train_df[label_column].to_list()
-
-    # Split test set
+def split_and_resize(images, labels, test_ratio, auto_resize, index_first):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 
-    # FOR DEBUG REMOVE IT
-    print(f"Train Shape: {len(train_images)}")
-    print(f"Train Label Len: {len(train_labels)}")
+    training_set = ImageSet(train_images, train_labels, index_first)
+    testing_set = ImageSet(test_images, test_labels, index_first)
 
-    print(f"Test Shape: {len(test_images)}")
-    print(f"Test Label Len: {len(test_labels)}")
-
-        # Get total number of images in each set
-    train_image_sizes, train_image_count, train_min_height, train_min_width = get_image_set_size(train_images, index_first=index_first)
-    test_image_sizes, test_image_count, test_min_height, test_min_width = get_image_set_size(test_images, index_first=index_first)
-
-    # FOR DEBUG REMOVE IT
-    print(f"train_image_sizes: {train_image_sizes}")
-    print(f"train_image_count: {train_image_count}")
-    print(f"train_min_height: {train_min_height}")
-    print(f"train_min_width: {train_min_width}")
-
-    print(f"test_image_sizes: {test_image_sizes}")
-    print(f"test_image_count: {test_image_count}")
-    print(f"test_min_height: {test_min_height}")
-    print(f"test_min_width: {test_min_width}")
+    min_height = min([training_set.min_height, testing_set.min_height])
+    min_width = min([training_set.min_width, testing_set.min_width])
 
     # Set input image shape
     if auto_resize:
-        min_height = min([train_min_height, test_min_height])
-        min_width = min([train_min_width, test_min_width])
         input_shape = (min_height, min_width, 1) # (height, width, channels)
     else:
-        input_shape = (512, 512, 1) # (height, width, channels)
+        input_shape = (512, 512, 1)
+
+    print(f"Training images: {training_set.count}")
+    print(f"Validation images: {testing_set.count}")
+    print(f"Min height: {min_height}")
+    print(f"Min width: {min_width}")
+    print(f"Input shape: {input_shape}")
+
+    return training_set, testing_set, input_shape
+
+def main():
+    # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    print('Tensorflow version: ' + tf.__version__)
+
+    ARGS, base_model = model_config()
+    if base_model is None:
+        print(f"{ARGS.arch} not in Keras applications!")
+        print(f"Use '--help' for list of supported options.")
+        return
+
+    # Pull the list of files
+    train_df = pd.read_csv(ARGS.data_csv)
+    images = train_df[ARGS.image_column].to_list()
+    labels = train_df[ARGS.label_column].to_list()
+
+    # Split training/test sets
+    # Returns ImageSet instances for each set and input shape
+    training_set, testing_set, input_shape = split_and_resize(images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first)
 
     # Create a mirrored strategy
     strategy = tf.distribute.MirroredStrategy()
     print(f'Number of devices: {strategy.num_replicas_in_sync}')
 
     # # Build the model
-    if classes is None:
-        classes = len(np.unique(labels))
+    if ARGS.classes is None:
+        ARGS.classes = len(np.unique(labels))
     classifier_activation = 'sigmoid'
-    loss_type = 'binary_crossentropy'
+    loss_type = 'categorical_crossentropy'
     lst_metrics = ['categorical_accuracy']
     lr_rate = 0.01
 
     with strategy.scope():
-        model = VGG_16(input_shape=input_shape, classes=classes, classifier_activation=classifier_activation)
+        model = build_image_classifier(
+            base_model=base_model,
+            classes=ARGS.classes,
+            input_shape=input_shape,
+            classifier_activation=classifier_activation,
+            dropout=0.1
+            )
         opt = tf.keras.optimizers.SGD(learning_rate=lr_rate, momentum=0.9)
         model.compile(loss=loss_type, optimizer=opt, metrics=lst_metrics)
 
@@ -101,17 +133,16 @@ def main():
     print(model.summary())
 
     # Determine batch size if auto-batch enabled
-    if auto_batch:
-        gpu_free, gpu_used = get_gpu_memory_usage()
-        model_mem = get_model_memory_usage(model)
-        batch_size = gpu_used // model_mem
-        print(f"GPU memory allocated: {gpu_used} bytes")
-        print(f"Model size: {model_mem} bytes")
-        print(f"Maximum batch size: {batch_size} images")
+    # Auto-batch will not run if no GPU present
+    if not ARGS.auto_batch or not tf.config.list_physical_devices('GPU'):
+        batch_size = ARGS.batch_size
+    else:
+        batch_size = get_max_batch_size(model)
+        
 
     # Initialize settings for training
-    train_steps = train_image_count // batch_size
-    val_steps = test_image_count // batch_size
+    train_steps = training_set.count // batch_size
+    val_steps = testing_set.count // batch_size
 
     # FOR DEBUG REMOVE IT
     print(f"input_shape: {input_shape}")
@@ -119,23 +150,22 @@ def main():
     print(f"val_steps: {val_steps}")
 
     # # Create the data generators
-    train_gen = batch_generator(train_images, train_labels, batch_size, input_shape)
-    test_gen = batch_generator(test_images, test_labels, batch_size, input_shape)
+    #train_gen = batch_generator(train_images, train_labels, batch_size, input_shape)
+    #test_gen = batch_generator(test_images, test_labels, batch_size, input_shape)
 
     # Train the model
-    model_checkpoint = tf.keras.callbacks.ModelCheckpoint(output+'.h5', monitor='categorical_accuracy', verbose=1, save_best_only=True)
+    model_checkpoint = tf.keras.callbacks.ModelCheckpoint('./' + ARGS.output + '.h5', monitor='categorical_accuracy', verbose=1, save_best_only=True)
     H = model.fit(
-        x=train_gen,
+        x=training_set.generate_batches(batch_size, input_shape),
         steps_per_epoch=train_steps,
-        validation_data=test_gen,
+        validation_data=testing_set.generate_batches(batch_size, input_shape),
         validation_steps=val_steps,
-        epochs=epochs,
+        epochs=ARGS.epochs,
         callbacks=[model_checkpoint])
 
     # Save loss history
     loss_history = np.array(H.history['loss'])
-    np.savetxt(output+'_loss.csv', loss_history, delimiter=",")
+    np.savetxt('./' + ARGS.output + '_loss.csv', loss_history, delimiter=",")
 
 if __name__ == '__main__':
     main()
-    
