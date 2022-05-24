@@ -11,6 +11,7 @@ This repo houses the initial scripts for building a deep learning app on BioData
 | --data_csv | Path to CSV file pointing to images/labels | string |  | YES |
 | --image_column | Column name for images | string |  | YES |
 | --label_column | Column name for labels | string |  | YES |
+| --arch | Model architecture | string |  | YES |
 | --test_ratio | Percentage for testing data | float | 0.3 |   |
 | --epochs | Number of training epochs | int | 15 |   |
 | --classes | Number of classes. If not specified, classes will be inferred from labels | int | None |   |
