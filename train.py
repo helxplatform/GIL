@@ -43,6 +43,7 @@ def model_config():
 
     # Parse command line arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", required=True, help="Directory containing images")
     parser.add_argument("--data_csv", required=True, metavar="CSV FILE", help="CSV file pointing to images")
     parser.add_argument("--image_column", required=True, help="Column name for images")
     parser.add_argument("--label_column", required=True, help="Column name for labels")
@@ -99,7 +100,7 @@ def main():
 
     # Pull the list of files
     train_df = pd.read_csv(ARGS.data_csv)
-    images = train_df[ARGS.image_column].to_list()
+    images = [ARGS.data_dir + name for name in train_df[ARGS.image_column].to_list()]
     labels = train_df[ARGS.label_column].to_list()
 
     # Split training/test sets
