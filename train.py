@@ -116,7 +116,7 @@ def main():
     if ARGS.classes is None:
         ARGS.classes = len(np.unique(labels))
     classifier_activation = 'sigmoid'
-    loss_type = 'categorical_crossentropy'
+    loss_type = 'sparse_categorical_crossentropy'
     lst_metrics = ['categorical_accuracy']
     lr_rate = 0.01
 
