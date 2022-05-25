@@ -211,3 +211,10 @@ def get_model_memory_usage(model, batch_size=1):
     model_bytes = int(total_memory + internal_model_mem_count)
 
     return model_bytes
+
+
+def get_max_batch_size(model):
+    _, gpu_used = get_gpu_memory_usage()
+    model_size = get_model_memory_usage(model)
+
+    return gpu_used // model_size
