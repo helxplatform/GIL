@@ -1,4 +1,5 @@
 """ Train VGG on image data """
+import os
 import argparse
 import tensorflow as tf
 import numpy as np
@@ -100,7 +101,7 @@ def main():
 
     # Pull the list of files
     train_df = pd.read_csv(ARGS.data_csv)
-    images = [ARGS.data_dir + name for name in train_df[ARGS.image_column].to_list()]
+    images = [os.path.join(ARGS.data_dir, name) for name in train_df[ARGS.image_column].to_list()]
     labels = train_df[ARGS.label_column].to_list()
 
     # Split training/test sets
