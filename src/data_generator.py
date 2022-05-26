@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class ImageSet:
     """An image stack dataset for batch generation in TensorFlow"""
-    def __init__(self, images, labels, index_first=False):
+    def __init__(self, images, labels, classes, index_first=False):
         """
         Constructs an ImageSet from a list of stack files.
 
@@ -26,6 +26,7 @@ class ImageSet:
         """
         self.images = images
         self.labels = labels
+        self.classes = classes
         self.index_first = index_first
         self.count = None
         self.min_height = None
@@ -103,7 +104,7 @@ class ImageSet:
             #print(f'batch_array shape BEFORE: {batch_array.shape}')
             batch_array = np.reshape(batch_array, (batch_array.shape[0], batch_array.shape[1], batch_array.shape[2], 1))
             #print(f'batch_array shape AFTER: {batch_array.shape}')
-            labels = tf.keras.utils.to_categorical(labels)
+            labels = tf.keras.utils.to_categorical(labels, num_classes=self.classes)
 
             # Yield to the calling function
             yield (batch_array, labels)
@@ -148,6 +149,8 @@ class ImageSet:
 
             labels = tf.keras.utils.to_categorical(labels)
 
+            print(f"Batch array: {batch_array.shape}")
+            print(f"Labels: {labels.shape}")
             # Yield to the calling function
             yield (batch_array, labels)
 
