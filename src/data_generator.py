@@ -185,24 +185,3 @@ class ImageSet:
         I = 1/255.0*(0.2989*channels[0] + 0.5870*channels[1] + 0.1140*channels[2])
 
         return sitk.Cast(sitk.RescaleIntensity(I), sitk.sitkUInt8)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
