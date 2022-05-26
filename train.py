@@ -57,6 +57,7 @@ def model_config():
     parser.add_argument("--auto_resize", help="Auto-resize to min height/width of image set", action="store_true")
     parser.add_argument("--auto_batch", help="Auto-detect max batch size. Selecting this will override any specified batch size", action="store_true")
     parser.add_argument('--index_first', help="Set images to depth as the first index (uncommon)", action="store_true")
+    parser.add_argument("--run_eagerly", help="Run eagerly (for debug). Will lose performance.", action="store_true")
     ARGS = parser.parse_args()
 
     if ARGS.arch not in model_dict:
@@ -66,11 +67,11 @@ def model_config():
 
     return ARGS, model_arch
 
-def split_and_resize(images, labels, test_ratio, auto_resize, index_first):
+def split_and_resize(images, labels, classes, test_ratio, auto_resize, index_first):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 
-    training_set = ImageSet(train_images, train_labels, index_first)
-    testing_set = ImageSet(test_images, test_labels, index_first)
+    training_set = ImageSet(train_images, train_labels, classes, index_first)
+    testing_set = ImageSet(test_images, test_labels, classes, index_first)
 
     min_height = min([training_set.min_height, testing_set.min_height])
     min_width = min([training_set.min_width, testing_set.min_width])
@@ -104,32 +105,41 @@ def main():
     images = [os.path.join(ARGS.data_dir, name) for name in train_df[ARGS.image_column].to_list()]
     labels = train_df[ARGS.label_column].to_list()
 
+    if ARGS.classes is None:
+        #classes = len(np.unique(labels))
+        classes = max(labels) + 1
+    else:
+        classes = ARGS.classes
+
     # Split training/test sets
     # Returns ImageSet instances for each set and input shape
-    training_set, testing_set, input_shape = split_and_resize(images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first)
+    training_set, testing_set, input_shape = split_and_resize(images, labels, classes, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first)
 
     # Create a mirrored strategy
     strategy = tf.distribute.MirroredStrategy()
     print(f'Number of devices: {strategy.num_replicas_in_sync}')
 
     # # Build the model
-    if ARGS.classes is None:
-        ARGS.classes = len(np.unique(labels))
     classifier_activation = 'sigmoid'
-    loss_type = 'sparse_categorical_crossentropy'
+    loss_type = 'categorical_crossentropy'
     lst_metrics = ['categorical_accuracy']
     lr_rate = 0.01
 
     with strategy.scope():
         model = build_image_classifier(
             base_model=base_model,
-            classes=ARGS.classes,
+            classes=classes,
             input_shape=input_shape,
             classifier_activation=classifier_activation,
-            dropout=0.1
-            )
+            dropout=0.1)
+
         opt = tf.keras.optimizers.SGD(learning_rate=lr_rate, momentum=0.9)
-        model.compile(loss=loss_type, optimizer=opt, metrics=lst_metrics)
+        
+        model.compile(
+            loss=loss_type,
+            optimizer=opt,
+            metrics=lst_metrics,
+            run_eagerly=ARGS.run_eagerly)
 
     # Print Model Summary
     print(model.summary())
@@ -140,7 +150,6 @@ def main():
         batch_size = ARGS.batch_size
     else:
         batch_size = get_max_batch_size(model)
-        
 
     # Initialize settings for training
     train_steps = training_set.count // batch_size
@@ -156,13 +165,19 @@ def main():
     #test_gen = batch_generator(test_images, test_labels, batch_size, input_shape)
 
     # Train the model
-    model_checkpoint = tf.keras.callbacks.ModelCheckpoint('./' + ARGS.output + '.h5', monitor='categorical_accuracy', verbose=1, save_best_only=True)
+    model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+        './' + ARGS.output + '.h5',
+        monitor='categorical_accuracy',
+        verbose=1,
+        save_best_only=True)
+
     H = model.fit(
         x=training_set.generate_batches(batch_size, input_shape),
         steps_per_epoch=train_steps,
         validation_data=testing_set.generate_batches(batch_size, input_shape),
         validation_steps=val_steps,
         epochs=ARGS.epochs,
+        batch_size=batch_size,
         callbacks=[model_checkpoint])
 
     # Save loss history
