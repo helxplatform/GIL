@@ -149,8 +149,6 @@ class ImageSet:
 
             labels = tf.keras.utils.to_categorical(labels)
 
-            print(f"Batch array: {batch_array.shape}")
-            print(f"Labels: {labels.shape}")
             # Yield to the calling function
             yield (batch_array, labels)
 
