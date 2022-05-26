@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.2-devel-ubuntu18.04
+FROM nvidia/cuda:11.4.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y \
@@ -25,6 +25,4 @@ RUN python3 -m pip install --upgrade pip && python3 -m pip install matplotlib se
 RUN python3 -m pip install --upgrade pip && python3 -m pip install SimpleITK
 
 WORKDIR /
-RUN git clone https://github.com/helxplatform/GIL.git
-
-#COPY Dockerfile /
+#RUN git clone https://github.com/helxplatform/GIL.git
