@@ -1,5 +1,6 @@
 """ Train VGG on image data """
 import os
+from datetime import datetime
 import argparse
 import tensorflow as tf
 import numpy as np
@@ -91,6 +92,8 @@ def split_and_resize(images, labels, classes, test_ratio, auto_resize, index_fir
     return training_set, testing_set, input_shape
 
 def main():
+    ini_time = datetime.now()
+    print(f"Init time: {ini_time}")
     # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
     print('Tensorflow version: ' + tf.__version__)
 
@@ -134,7 +137,7 @@ def main():
             dropout=0.1)
 
         opt = tf.keras.optimizers.SGD(learning_rate=lr_rate, momentum=0.9)
-        
+
         model.compile(
             loss=loss_type,
             optimizer=opt,
@@ -164,6 +167,9 @@ def main():
     #train_gen = batch_generator(train_images, train_labels, batch_size, input_shape)
     #test_gen = batch_generator(test_images, test_labels, batch_size, input_shape)
 
+    train_start_time = datetime.now()
+    print(f"Training start time: {train_start_time}")
+    print(f"Elapsed: {train_start_time - ini_time}")
     # Train the model
     model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
         './' + ARGS.output + '.h5',
@@ -183,6 +189,11 @@ def main():
     # Save loss history
     loss_history = np.array(H.history['loss'])
     np.savetxt('./' + ARGS.output + '_loss.csv', loss_history, delimiter=",")
+
+    end_time = datetime.now()
+    print(f"End time: {end_time}")
+    print(f"Training time: {end_time - train_start_time}")
+    print(f"Total elapsed: {end_time - ini_time}")
 
 if __name__ == '__main__':
     main()
