@@ -7,7 +7,7 @@ if __name__ == "__main__":
     assert y_train.shape == (50000, 1)
     assert y_test.shape == (10000, 1)
 
-    model = tf.keras.applications.VGG16(weights=None, input_shape=(32, 32, 1), classes=10)
+    model = tf.keras.applications.VGG16(weights=None, input_shape=(32, 32, 3), classes=10)
     print(model.summary())
 
     model.compile(loss="sparse_categorical_crossentropy")
