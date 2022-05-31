@@ -160,6 +160,7 @@ def main():
 
     # FOR DEBUG REMOVE IT
     print(f"input_shape: {input_shape}")
+    print(f"batch_size: {batch_size}")
     print(f"train_steps: {train_steps}")
     print(f"val_steps: {val_steps}")
 
