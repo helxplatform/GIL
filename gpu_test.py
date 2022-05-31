@@ -19,7 +19,7 @@ def get_gpu_memory_usage():
     return memory_free, memory_used
 
 
-def get_model_memory_usage(model, batch_size=1):
+def get_model_memory_usage(model, unit, batch_size=1):
     shapes_mem_count = 0
     internal_model_mem_count = 0
     for layer in model.layers:
@@ -47,14 +47,27 @@ def get_model_memory_usage(model, batch_size=1):
 
     total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
 
-    model_bytes = int(total_memory + internal_model_mem_count)
+    model_bytes = int(total_memory + internal_model_mem_count) #bytes
 
-    return model_bytes
+    unit_dict = {
+        "kibi": 1,
+        "mebi": 2,
+        "gibi": 3
+    }
+
+    if unit in unit_dict:
+        model_size = int(model_bytes/(1024 ** unit_dict[unit]))
+    else:
+        unit = "byte"
+        model_size = model_bytes
+
+    return model_size
 
 
-def get_max_batch_size(model):
+def get_max_batch_size(model, unit="byte"):
+    #Unit: "byte", "kibi", "mebi", "gibi"
     _, gpu_used = get_gpu_memory_usage()
-    model_size = get_model_memory_usage(model)
+    model_size = get_model_memory_usage(model, unit=unit)
     print(f"GPU memory allocated: {gpu_used}")
     print(f"Model size: {model_size}")
 
@@ -72,7 +85,7 @@ if __name__ == "__main__":
     print(model.summary())
 
     model.compile(loss="sparse_categorical_crossentropy")
-    max_batch_size = get_max_batch_size(model)
+    max_batch_size = get_max_batch_size(model, unit="mebi")
     print(f"Max batch size: {max_batch_size}")
 
     model.fit(x_train[:5, ...], y_train[:5], verbose=True)
