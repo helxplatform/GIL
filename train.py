@@ -155,8 +155,12 @@ def main():
         batch_size = get_max_batch_size(model)
 
     # Initialize settings for training
-    train_steps = training_set.count // batch_size
-    val_steps = testing_set.count // batch_size
+    try:
+        train_steps = training_set.count // batch_size
+        val_steps = testing_set.count // batch_size
+    except ZeroDivisionError:
+        print("Returned batch size of 0. Setting batch size to 1")
+        batch_size = 1
 
     # FOR DEBUG REMOVE IT
     print(f"input_shape: {input_shape}")
