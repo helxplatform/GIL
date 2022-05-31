@@ -152,19 +152,14 @@ def main():
     if not ARGS.auto_batch or not tf.config.list_physical_devices('GPU'):
         batch_size = ARGS.batch_size
     else:
-        batch_size = get_max_batch_size(model)
+        batch_size = get_max_batch_size(model, unit="mebi")
 
     # Initialize settings for training
-    try:
-        train_steps = training_set.count // batch_size
-        val_steps = testing_set.count // batch_size
-    except ZeroDivisionError:
-        print("Returned batch size of 0. Setting batch size to 1")
-        batch_size = 1
+    train_steps = training_set.count // batch_size
+    val_steps = testing_set.count // batch_size
 
     # FOR DEBUG REMOVE IT
     print(f"input_shape: {input_shape}")
-    print(f"batch_size: {batch_size}")
     print(f"train_steps: {train_steps}")
     print(f"val_steps: {val_steps}")
 
