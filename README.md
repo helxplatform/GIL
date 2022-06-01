@@ -8,6 +8,7 @@ This repo houses the initial scripts for building a deep learning app on BioData
 ### Input arguments:
 | Arg | Description | Type | Default | Required |
 | --- | ----------- | ---- | ------ | -------- |
+| --data_dir | Path to directory containing images | string |  | YES |
 | --data_csv | Path to CSV file pointing to images/labels | string |  | YES |
 | --image_column | Column name for images | string |  | YES |
 | --label_column | Column name for labels | string |  | YES |
@@ -58,4 +59,4 @@ if a GPU is detected. This will override any user defined `--batch_size`. If no 
 which defaults to 8 if not defined.
 
 ## Debug
-`get_sizes.py --data_csv /path/to/file.csv --image_column image_path_column_name` will create a CSV containing the image name, SimpleITK image shape, and Numpy array shape. It will also print this information to the console.
+`get_sizes.py --data_dir /path/to/dir/ --data_csv /path/to/file.csv --image_column image_path_column_name` will create a CSV containing the image name, SimpleITK image shape, and Numpy array shape. It will also print this information to the console.
