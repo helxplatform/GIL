@@ -12,8 +12,9 @@ from sklearn.metrics import accuracy_score, roc_curve, auc, roc_auc_score, \
 
 class EpochTimeCallback(tf.keras.callbacks.Callback):
     """ Custom callback to print epoch times """
-    def __init__(self):
+    def __init__(self, log):
         super(EpochTimeCallback, self).__init__()
+        self._log = log
         self.times = []
         self.epoch_start = None
 
@@ -24,8 +25,9 @@ class EpochTimeCallback(tf.keras.callbacks.Callback):
         self.times.append((epoch, datetime.now() - self.epoch_start))
 
     def on_train_end(self, logs=None):
+        self._log.write("EPOCH TIMES\n")
         for time in self.times:
-            print(f"Epoch {time[0]}: {time[1]}")
+            self._log.write(f"Epoch {time[0]}: {time[1]}\n")
 
 def eprint(args):
     sys.stderr.write(str(args) + "\n")
@@ -240,10 +242,15 @@ def get_model_memory_usage(model, unit, batch_size=1):
     return model_size
 
 
-def get_max_batch_size(model, unit="byte"):
+def get_max_batch_size(model, unit="byte", log=None):
     #Unit: "byte", "kibi", "mebi", "gibi"
     _, gpu_used = get_gpu_memory_usage()
     model_size = get_model_memory_usage(model, unit=unit)
+
+    if log:
+        log.write(f"GPU memory allocated: {gpu_used}\n")
+        log.write(f"Model size: {model_size}\n")
+
     print(f"GPU memory allocated: {gpu_used}")
     print(f"Model size: {model_size}")
 
