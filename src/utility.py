@@ -1,16 +1,31 @@
 """ Utility scripts for deep learning pipeline """
 import sys
 import itertools
-import argparse
-import shutil
-import glob
 import subprocess as sp
+from datetime import datetime
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from sklearn.metrics import accuracy_score, roc_curve, auc, roc_auc_score, \
     precision_recall_fscore_support, matthews_corrcoef
+
+class EpochTimeCallback(tf.keras.callbacks.Callback):
+    """ Custom callback to print epoch times """
+    def __init__(self):
+        super(EpochTimeCallback, self).__init__()
+        self.times = []
+        self.epoch_start = None
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch_start = datetime.now()
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.times.append((epoch, datetime.now() - self.epoch_start))
+
+    def on_train_end(self, logs=None):
+        for time in self.times:
+            print(f"Epoch {time[0]}: {time[1]}")
 
 def eprint(args):
     sys.stderr.write(str(args) + "\n")
