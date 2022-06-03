@@ -68,14 +68,14 @@ def model_config():
 
     return ARGS, model_arch
 
-def split_and_resize(images, labels, classes, test_ratio, auto_resize, index_first):
+def split_and_resize(images, labels, test_ratio, auto_resize, index_first):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 
-    training_set = ImageSet(train_images, train_labels, classes, index_first)
-    testing_set = ImageSet(test_images, test_labels, classes, index_first)
+    training_set = ImageSet(train_images, train_labels, index_first)
+    validation_set = ImageSet(test_images, test_labels, index_first)
 
-    min_height = min([training_set.min_height, testing_set.min_height])
-    min_width = min([training_set.min_width, testing_set.min_width])
+    min_height = min([training_set.min_height, validation_set.min_height])
+    min_width = min([training_set.min_width, validation_set.min_width])
 
     # Set input image shape
     if auto_resize:
@@ -83,13 +83,16 @@ def split_and_resize(images, labels, classes, test_ratio, auto_resize, index_fir
     else:
         input_shape = (512, 512, 1)
 
+    training_set.input_shape = input_shape
+    validation_set.input_shape = input_shape
+
     print(f"Training images: {training_set.count}")
-    print(f"Validation images: {testing_set.count}")
+    print(f"Validation images: {validation_set.count}")
     print(f"Min height: {min_height}")
     print(f"Min width: {min_width}")
     print(f"Input shape: {input_shape}")
 
-    return training_set, testing_set, input_shape
+    return training_set, validation_set, input_shape
 
 def main():
     ini_time = datetime.now()
@@ -116,7 +119,7 @@ def main():
 
     # Split training/test sets
     # Returns ImageSet instances for each set and input shape
-    training_set, testing_set, input_shape = split_and_resize(images, labels, classes, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first)
+    training_set, validation_set, input_shape = split_and_resize(images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first)
 
     # Create a mirrored strategy
     strategy = tf.distribute.MirroredStrategy()
@@ -124,8 +127,8 @@ def main():
 
     # # Build the model
     classifier_activation = 'sigmoid'
-    loss_type = 'categorical_crossentropy'
-    lst_metrics = ['categorical_accuracy']
+    loss_type = 'sparse_categorical_crossentropy'
+    lst_metrics = ['sparse_categorical_accuracy']
     lr_rate = 0.01
 
     with strategy.scope():
@@ -155,17 +158,34 @@ def main():
         batch_size = get_max_batch_size(model, unit="mebi")
 
     # Initialize settings for training
-    train_steps = training_set.count // batch_size
-    val_steps = testing_set.count // batch_size
+    train_steps = int(np.ceil(training_set.count / batch_size))
+    val_steps = int(np.ceil(validation_set.count / batch_size))
 
     # FOR DEBUG REMOVE IT
     print(f"input_shape: {input_shape}")
     print(f"train_steps: {train_steps}")
     print(f"val_steps: {val_steps}")
 
-    # # Create the data generators
-    #train_gen = batch_generator(train_images, train_labels, batch_size, input_shape)
-    #test_gen = batch_generator(test_images, test_labels, batch_size, input_shape)
+    # Create the data generators
+    train_dataset = tf.data.Dataset.from_generator(
+        training_set.generate_dataset,
+        output_signature=(
+            tf.TensorSpec(shape=[512, 512, 1], dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.float32)
+        )).batch(batch_size, drop_remainder=False)
+
+    val_dataset = tf.data.Dataset.from_generator(
+        validation_set.generate_dataset,
+        output_signature=(
+            tf.TensorSpec(shape=[512, 512, 1], dtype=tf.float32),
+            tf.TensorSpec(shape=(), dtype=tf.float32)
+        )).batch(batch_size, drop_remainder=False)
+
+    options = tf.data.Options()
+    options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
+    train_dataset = train_dataset.with_options(options)
+    val_dataset = val_dataset.with_options(options)
+
 
     train_start_time = datetime.now()
     print(f"Training start time: {train_start_time}")
@@ -173,14 +193,14 @@ def main():
     # Train the model
     model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
         './' + ARGS.output + '.h5',
-        monitor='categorical_accuracy',
+        monitor='sparse_categorical_accuracy',
         verbose=1,
         save_best_only=True)
 
     H = model.fit(
-        x=training_set.generate_batches(batch_size, input_shape),
+        x=train_dataset,
         steps_per_epoch=train_steps,
-        validation_data=testing_set.generate_batches(batch_size, input_shape),
+        validation_data=val_dataset,
         validation_steps=val_steps,
         epochs=ARGS.epochs,
         batch_size=batch_size,
