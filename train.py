@@ -212,8 +212,7 @@ def main():
         validation_steps=val_steps,
         epochs=ARGS.epochs,
         batch_size=batch_size,
-        #callbacks=[model_checkpoint, epoch_time_callback]
-        callbacks=[model_checkpoint]
+        callbacks=[model_checkpoint, epoch_time_callback]
     )
 
     # Save loss history
