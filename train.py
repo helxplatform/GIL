@@ -146,7 +146,7 @@ def main():
             classifier_activation=classifier_activation,
             dropout=0.1)
 
-        opt = tf.keras.optimizers.SGD(learning_rate=lr_rate, momentum=0.9)
+        opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
 
         model.compile(
             loss=loss_type,
