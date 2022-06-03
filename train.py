@@ -222,6 +222,8 @@ def main():
     LOG.write(f"\nEnd time: {end_time}\n")
     LOG.write(f"Training time: {end_time - train_start_time}\n")
     LOG.write(f"Total elapsed: {end_time - ini_time}")
+    
+    LOG.close()
 
 if __name__ == '__main__':
     main()
