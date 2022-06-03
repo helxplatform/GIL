@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from src.models import build_image_classifier
-from src.utility import get_max_batch_size
+from src.utility import EpochTimeCallback, get_max_batch_size
 from src.data_generator import ImageSet
 
 def model_config():
@@ -196,6 +196,7 @@ def main():
         monitor='sparse_categorical_accuracy',
         verbose=1,
         save_best_only=True)
+    epoch_time_callback = EpochTimeCallback()
 
     H = model.fit(
         x=train_dataset,
@@ -204,7 +205,7 @@ def main():
         validation_steps=val_steps,
         epochs=ARGS.epochs,
         batch_size=batch_size,
-        callbacks=[model_checkpoint])
+        callbacks=[model_checkpoint, epoch_time_callback])
 
     # Save loss history
     loss_history = np.array(H.history['loss'])
