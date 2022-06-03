@@ -68,7 +68,7 @@ def model_config():
 
     return ARGS, model_arch
 
-def split_and_resize(images, labels, test_ratio, auto_resize, index_first):
+def split_and_resize(images, labels, test_ratio, auto_resize, index_first, log=None):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 
     training_set = ImageSet(train_images, train_labels, index_first)
@@ -86,6 +86,13 @@ def split_and_resize(images, labels, test_ratio, auto_resize, index_first):
     training_set.input_shape = input_shape
     validation_set.input_shape = input_shape
 
+    if log:
+        log.write(f"Training images: {training_set.count}\n")
+        log.write(f"Validation images: {validation_set.count}\n")
+        log.write(f"Min height: {min_height}\n")
+        log.write(f"Min width: {min_width}\n")
+        log.write(f"Input shape: {input_shape}\n\n")
+
     print(f"Training images: {training_set.count}")
     print(f"Validation images: {validation_set.count}")
     print(f"Min height: {min_height}")
@@ -95,10 +102,10 @@ def split_and_resize(images, labels, test_ratio, auto_resize, index_first):
     return training_set, validation_set, input_shape
 
 def main():
+    LOG = open("./log.txt", "w")
     ini_time = datetime.now()
-    print(f"Init time: {ini_time}")
-    # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-    print('Tensorflow version: ' + tf.__version__)
+    LOG.write(f"Init time: {ini_time}\n\n")
+    LOG.write(f"Tensorflow version: {tf.__version__}\n")
 
     ARGS, base_model = model_config()
     if base_model is None:
@@ -119,11 +126,11 @@ def main():
 
     # Split training/test sets
     # Returns ImageSet instances for each set and input shape
-    training_set, validation_set, input_shape = split_and_resize(images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first)
+    training_set, validation_set, input_shape = split_and_resize(images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first, LOG)
 
     # Create a mirrored strategy
     strategy = tf.distribute.MirroredStrategy()
-    print(f'Number of devices: {strategy.num_replicas_in_sync}')
+    LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
 
     # # Build the model
     classifier_activation = 'sigmoid'
@@ -155,16 +162,16 @@ def main():
     if not ARGS.auto_batch or not tf.config.list_physical_devices('GPU'):
         batch_size = ARGS.batch_size
     else:
-        batch_size = get_max_batch_size(model, unit="mebi")
+        batch_size = get_max_batch_size(model, unit="mebi", log=LOG)
 
     # Initialize settings for training
     train_steps = int(np.ceil(training_set.count / batch_size))
     val_steps = int(np.ceil(validation_set.count / batch_size))
 
     # FOR DEBUG REMOVE IT
-    print(f"batch_size: {batch_size}")
-    print(f"train_steps: {train_steps}")
-    print(f"val_steps: {val_steps}")
+    LOG.write(f"batch_size: {batch_size}\n")
+    LOG.write(f"train_steps: {train_steps}\n")
+    LOG.write(f"val_steps: {val_steps}\n\n")
 
     # Create the data generators
     train_dataset = tf.data.Dataset.from_generator(
@@ -188,15 +195,15 @@ def main():
 
 
     train_start_time = datetime.now()
-    print(f"Training start time: {train_start_time}")
-    print(f"Elapsed: {train_start_time - ini_time}")
+    LOG.write(f"Training start time: {train_start_time}\n")
+    LOG.write(f"Elapsed: {train_start_time - ini_time}\n")
     # Train the model
     model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
         './' + ARGS.output + '.h5',
         monitor='sparse_categorical_accuracy',
         verbose=1,
         save_best_only=True)
-    epoch_time_callback = EpochTimeCallback()
+    epoch_time_callback = EpochTimeCallback(log=LOG)
 
     H = model.fit(
         x=train_dataset,
@@ -212,9 +219,9 @@ def main():
     np.savetxt('./' + ARGS.output + '_loss.csv', loss_history, delimiter=",")
 
     end_time = datetime.now()
-    print(f"End time: {end_time}")
-    print(f"Training time: {end_time - train_start_time}")
-    print(f"Total elapsed: {end_time - ini_time}")
+    LOG.write(f"\nEnd time: {end_time}\n")
+    LOG.write(f"Training time: {end_time - train_start_time}\n")
+    LOG.write(f"Total elapsed: {end_time - ini_time}")
 
 if __name__ == '__main__':
     main()
