@@ -162,7 +162,7 @@ def main():
     val_steps = int(np.ceil(validation_set.count / batch_size))
 
     # FOR DEBUG REMOVE IT
-    print(f"input_shape: {input_shape}")
+    print(f"batch_size: {batch_size}")
     print(f"train_steps: {train_steps}")
     print(f"val_steps: {val_steps}")
 
