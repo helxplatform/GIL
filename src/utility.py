@@ -246,12 +246,15 @@ def get_max_batch_size(model, unit="byte", log=None):
     #Unit: "byte", "kibi", "mebi", "gibi"
     _, gpu_used = get_gpu_memory_usage()
     model_size = get_model_memory_usage(model, unit=unit)
+    batch_size = gpu_used // model_size
 
     if log:
         log.write(f"GPU memory allocated: {gpu_used}\n")
         log.write(f"Model size: {model_size}\n")
+        log.write(f"Batch size: {batch_size}\n")
 
     print(f"GPU memory allocated: {gpu_used}")
     print(f"Model size: {model_size}")
+    print(f"Batch size: {batch_size}")
 
-    return gpu_used // model_size
+    return batch_size
