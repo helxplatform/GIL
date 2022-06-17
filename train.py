@@ -128,7 +128,12 @@ def main():
     # Split training/test sets
     # Returns ImageSet instances for each set and input shape
     training_set, validation_set, input_shape = split_and_resize(
-        images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first, LOG)
+        images=images,
+        labels=labels,
+        test_ratio=ARGS.test_ratio,
+        auto_resize=ARGS.auto_resize,
+        index_first=ARGS.index_first,
+        log=LOG)
 
     # Create a mirrored strategy
     cdo_dict = {
@@ -154,7 +159,7 @@ def main():
             classifier_activation=classifier_activation,
             dropout=0.1)
 
-        opt = tf.keras.optimizers.SGD(learning_rate=lr_rate, momentum=0.9)
+        opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
 
         model.compile(
             loss=loss_type,
