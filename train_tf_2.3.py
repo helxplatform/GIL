@@ -182,14 +182,14 @@ def main():
         training_set.generate_dataset,
         output_types=(tf.float32, tf.float32),
         output_shapes=(
-            (tf.TensorShape([None, 512, 512, 1]), tf.TensorShape(None))
+            (tf.TensorShape([512, 512, 1]), tf.TensorShape(None))
         )).batch(batch_size, drop_remainder=False)
 
     val_dataset = tf.data.Dataset.from_generator(
         validation_set.generate_dataset,
         output_types=(tf.float32, tf.float32),
         output_shapes=(
-            (tf.TensorShape([None, 512, 512, 1]), tf.TensorShape(None))
+            (tf.TensorShape([512, 512, 1]), tf.TensorShape(None))
         )).batch(batch_size, drop_remainder=False)
 
     options = tf.data.Options()
