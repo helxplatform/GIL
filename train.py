@@ -181,8 +181,7 @@ def main():
     train_steps = int(np.ceil(training_set.count / batch_size))
     val_steps = int(np.ceil(validation_set.count / batch_size))
 
-    # FOR DEBUG REMOVE IT
-    LOG.write(f"batch_size: {batch_size}\n")
+    # Log steps
     LOG.write(f"train_steps: {train_steps}\n")
     LOG.write(f"val_steps: {val_steps}\n\n")
 
