@@ -59,14 +59,15 @@ def model_config():
     parser.add_argument("--auto_batch", help="Auto-detect max batch size. Selecting this will override any specified batch size", action="store_true")
     parser.add_argument('--index_first', help="Set images to depth as the first index (uncommon)", action="store_true")
     parser.add_argument("--run_eagerly", help="Run eagerly (for debug). Will lose performance.", action="store_true")
-    ARGS = parser.parse_args()
+    parser.add_argument("--cross_dev_ops", help="Cross device operation to use for multi-GPU reduction. 'all' = NcclAllReduce, 'hierarchical' = HierarchicalCopyAllReduce, 'one' = ReductionToOneDevice", type=str, choices=["all", "hierarchical", "one"], default="all")
+    args = parser.parse_args()
 
-    if ARGS.arch not in model_dict:
+    if args.arch not in model_dict:
         model_arch = None
     else:
-        model_arch = model_dict[ARGS.arch]
+        model_arch = model_dict[args.arch]
 
-    return ARGS, model_arch
+    return args, model_arch
 
 def split_and_resize(images, labels, test_ratio, auto_resize, index_first, log=None):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
@@ -126,10 +127,17 @@ def main():
 
     # Split training/test sets
     # Returns ImageSet instances for each set and input shape
-    training_set, validation_set, input_shape = split_and_resize(images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first, LOG)
+    training_set, validation_set, input_shape = split_and_resize(
+        images, labels, ARGS.test_ratio, ARGS.auto_resize, ARGS.index_first, LOG)
 
     # Create a mirrored strategy
-    strategy = tf.distribute.MirroredStrategy()
+    cdo_dict = {
+        "all": tf.distribute.NcclAllReduce(),
+        "hierarchical": tf.distribute.HierarchicalCopyAllReduce(),
+        "one": tf.distribute.ReductionToOneDevice()
+    }
+    strategy = tf.distribute.MirroredStrategy(
+        cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
     LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
 
     # # Build the model
@@ -146,7 +154,7 @@ def main():
             classifier_activation=classifier_activation,
             dropout=0.1)
 
-        opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
+        opt = tf.keras.optimizers.SGD(learning_rate=lr_rate, momentum=0.9)
 
         model.compile(
             loss=loss_type,
@@ -212,8 +220,7 @@ def main():
         validation_steps=val_steps,
         epochs=ARGS.epochs,
         batch_size=batch_size,
-        callbacks=[model_checkpoint, epoch_time_callback]
-    )
+        callbacks=[model_checkpoint, epoch_time_callback])
 
     # Save loss history
     loss_history = np.array(H.history['loss'])
@@ -223,7 +230,7 @@ def main():
     LOG.write(f"\nEnd time: {end_time}\n")
     LOG.write(f"Training time: {end_time - train_start_time}\n")
     LOG.write(f"Total elapsed: {end_time - ini_time}")
-    
+
     LOG.close()
 
 if __name__ == '__main__':
