@@ -139,7 +139,7 @@ def main():
     cdo_dict = {
         "all": tf.distribute.NcclAllReduce(),
         "hierarchical": tf.distribute.HierarchicalCopyAllReduce(),
-        "one": tf.distribute.ReductionToOneDevice(device_to_reduce="/gpu:3")
+        "one": tf.distribute.ReductionToOneDevice(reduce_to_device="/gpu:3")
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
