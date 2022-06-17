@@ -107,6 +107,51 @@ class ImageSet:
             yield (batch_tensor, img_label)
 
 
+    def generate_batches(self, batch_size):
+        """
+        This is a custom data generator for SimpleITK image stacks.
+        'Index first' is relative to the SimpleITK image; if it is False, the first
+        position will be the depth index of the NumPy array because of the shape convention difference.
+        """
+        height = self.input_shape[0]
+        width = self.input_shape[1]
+        depth_index = -1 if self.index_first else 0
+
+        # Load first stack
+        file_index = 0
+        slice_num = 0
+        img_array, img_label, file_index = self.process_next_stack(file_index, height, width)
+
+        # Loop indefinitely
+        while True:
+            # Initialize image batch
+            batch_array = []
+            labels = []
+
+            # Populate array until we hit the batch size
+            while len(batch_array) < batch_size:
+                if slice_num < img_array.shape[depth_index]-1:
+                    if self.index_first:
+                        batch_array.append(img_array[:,:,slice_num])
+                    else:
+                        batch_array.append(img_array[slice_num,:,:])
+                    labels.append(img_label)
+                    slice_num += 1
+                else:
+                    img_array, img_label, file_index = self.process_next_stack(file_index, height, width)
+                    slice_num = 0
+
+            # Set correct formats
+            batch_array = np.array(batch_array)
+            #print(f'batch_array shape BEFORE: {batch_array.shape}')
+            batch_array = np.reshape(batch_array, (batch_array.shape[0], batch_array.shape[1], batch_array.shape[2], 1))
+            #print(f'batch_array shape AFTER: {batch_array.shape}')
+            #labels = tf.keras.utils.to_categorical(labels, num_classes=self.classes)
+
+            # Yield to the calling function
+            yield (batch_array, labels)
+
+
     def process_next_stack(self, file_index, height, width):
         # Load stack file
         img = sitk.ReadImage(self.images[file_index])
