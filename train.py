@@ -189,14 +189,14 @@ def main():
     train_dataset = tf.data.Dataset.from_generator(
         training_set.generate_dataset,
         output_signature=(
-            tf.TensorSpec(shape=[512, 512, 1], dtype=tf.float32),
+            tf.TensorSpec(shape=training_set.input_shape, dtype=tf.float32),
             tf.TensorSpec(shape=(), dtype=tf.float32)
         )).batch(batch_size, drop_remainder=False)
 
     val_dataset = tf.data.Dataset.from_generator(
         validation_set.generate_dataset,
         output_signature=(
-            tf.TensorSpec(shape=[512, 512, 1], dtype=tf.float32),
+            tf.TensorSpec(shape=validation_set.input_shape, dtype=tf.float32),
             tf.TensorSpec(shape=(), dtype=tf.float32)
         )).batch(batch_size, drop_remainder=False)
 
