@@ -145,7 +145,7 @@ def main():
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
     LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
 
-    # # Build the model
+    # Build the model
     classifier_activation = 'sigmoid'
     loss_type = 'sparse_categorical_crossentropy'
     lst_metrics = ['sparse_categorical_accuracy']
