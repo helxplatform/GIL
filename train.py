@@ -205,11 +205,11 @@ def main():
     train_dataset = train_dataset.with_options(options)
     val_dataset = val_dataset.with_options(options)
 
-
+    # Train the model
     train_start_time = datetime.now()
     LOG.write(f"Training start time: {train_start_time}\n")
     LOG.write(f"Elapsed: {train_start_time - ini_time}\n")
-    # Train the model
+
     model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
         './' + ARGS.output + '.h5',
         monitor='sparse_categorical_accuracy',
