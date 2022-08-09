@@ -54,6 +54,9 @@ def model_config():
     parser.add_argument("--epochs", help="Number of epochs. Default is 15", type=int, default=15)
     parser.add_argument("--classes", help="Number of classes. If not specified, classes will be inferred from labels", type=int, default=None)
     parser.add_argument("--batch_size", help="Training batch size. Default is 8", type=int, default=8)
+    parser.add_argument("--image_height", help="Height of images (pixels)", type=int, default=512)
+    parser.add_argument("--image_width", help="Width of images (pixels)", type=int, default=512)
+    parser.add_argument("--image_channels", help="Number of channels", type=int, default=1)
     parser.add_argument("--output", help="Specify file name for output. Default is 'model'", default='model')
     parser.add_argument("--auto_resize", help="Auto-resize to min height/width of image set", action="store_true")
     parser.add_argument("--auto_batch", help="Auto-detect max batch size. Selecting this will override any specified batch size", action="store_true")
@@ -69,7 +72,7 @@ def model_config():
 
     return args, model_arch
 
-def split_and_resize(images, labels, test_ratio, auto_resize, index_first, log=None):
+def split_and_resize(images, labels, test_ratio, input_shape=(512, 512, 1), auto_resize=False, index_first=False, log=None):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 
     training_set = ImageSet(train_images, train_labels, index_first)
@@ -81,8 +84,6 @@ def split_and_resize(images, labels, test_ratio, auto_resize, index_first, log=N
     # Set input image shape
     if auto_resize:
         input_shape = (min_height, min_width, 1) # (height, width, channels)
-    else:
-        input_shape = (512, 512, 1)
 
     training_set.input_shape = input_shape
     validation_set.input_shape = input_shape
@@ -131,6 +132,7 @@ def main():
         images=images,
         labels=labels,
         test_ratio=ARGS.test_ratio,
+        input_shape=(ARGS.image_height, ARGS.image_width, ARGS.image_channels),
         auto_resize=ARGS.auto_resize,
         index_first=ARGS.index_first,
         log=LOG)
@@ -139,13 +141,13 @@ def main():
     cdo_dict = {
         "all": tf.distribute.NcclAllReduce(),
         "hierarchical": tf.distribute.HierarchicalCopyAllReduce(),
-        "one": tf.distribute.ReductionToOneDevice(reduce_to_device="/gpu:3")
+        "one": tf.distribute.ReductionToOneDevice(reduce_to_device="/gpu:0")
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
     LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
 
-    # # Build the model
+    # Build the model
     classifier_activation = 'sigmoid'
     loss_type = 'sparse_categorical_crossentropy'
     lst_metrics = ['sparse_categorical_accuracy']
@@ -205,11 +207,11 @@ def main():
     train_dataset = train_dataset.with_options(options)
     val_dataset = val_dataset.with_options(options)
 
-
+    # Train the model
     train_start_time = datetime.now()
     LOG.write(f"Training start time: {train_start_time}\n")
     LOG.write(f"Elapsed: {train_start_time - ini_time}\n")
-    # Train the model
+
     model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
         './' + ARGS.output + '.h5',
         monitor='sparse_categorical_accuracy',
