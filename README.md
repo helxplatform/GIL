@@ -4,7 +4,7 @@
 This repo houses the initial scripts for building a deep learning app on BioData Catalyst powered by Seven Bridges. These scripts will be used to test training scalability, among other issues.
 
 ## Main script
-`train.py` creates a VGG-16 model for single-channel image classification.
+`train.py` trains a model for image classification.
 ### Input arguments:
 | Arg | Description | Type | Default | Required |
 | --- | ----------- | ---- | ------ | -------- |
