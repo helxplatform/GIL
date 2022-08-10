@@ -157,7 +157,6 @@ def main():
             weights=None,
             classes=classes,
             input_shape=input_shape,
-            classifier_activation=classifier_activation,
             include_top=True)
 
         opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
