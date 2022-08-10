@@ -154,12 +154,19 @@ def main():
     lr_rate = 0.01
 
     with strategy.scope():
-        model = build_image_classifier(
-            base_model=base_model,
+        #model = build_image_classifier(
+        #    base_model=base_model,
+        #    classes=classes,
+        #    input_shape=input_shape,
+        #    classifier_activation=classifier_activation,
+        #    dropout=0.1)
+
+        model = base_model(
+            weights=None,
             classes=classes,
             input_shape=input_shape,
             classifier_activation=classifier_activation,
-            dropout=0.1)
+            include_top=True)
 
         opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
 
