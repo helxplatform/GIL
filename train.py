@@ -117,7 +117,7 @@ def main():
     else:
         log_name = f"./{f_name}_{ARGS.arch}_log.txt"
 
-    LOG = open("./log.txt", "w")
+    LOG = open(log_name, "w")
     ini_time = datetime.now()
     LOG.write(f"Init time: {ini_time}\n\n")
     LOG.write(f"Tensorflow version: {tf.__version__}\n")
