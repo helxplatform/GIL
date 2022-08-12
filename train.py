@@ -63,6 +63,7 @@ def model_config():
     parser.add_argument('--index_first', help="Set images to depth as the first index (uncommon)", action="store_true")
     parser.add_argument("--run_eagerly", help="Run eagerly (for debug). Will lose performance.", action="store_true")
     parser.add_argument("--cross_dev_ops", help="Cross device operation to use for multi-GPU reduction. 'all' = NcclAllReduce, 'hierarchical' = HierarchicalCopyAllReduce, 'one' = ReductionToOneDevice", type=str, choices=["all", "hierarchical", "one"], default="all")
+    parser.add_argument("--instance_type", help="Instance type for logging purposes", type=str, default=None)
     args = parser.parse_args()
 
     if args.arch not in model_dict:
@@ -104,16 +105,22 @@ def split_and_resize(images, labels, test_ratio, input_shape=(512, 512, 1), auto
     return training_set, validation_set, input_shape
 
 def main():
-    LOG = open("./log.txt", "w")
-    ini_time = datetime.now()
-    LOG.write(f"Init time: {ini_time}\n\n")
-    LOG.write(f"Tensorflow version: {tf.__version__}\n")
-
     ARGS, base_model = model_config()
     if base_model is None:
         print(f"{ARGS.arch} not in Keras applications!")
         print(f"Use '--help' for list of supported options.")
         return
+
+    f_name = ARGS.data_csv.split("/")[-1].replace(".csv","")
+    if ARGS.instance_type:
+        log_name = f"./{f_name}_{ARGS.arch}_{ARGS.instance_type}_log.txt"
+    else:
+        log_name = f"./{f_name}_{ARGS.arch}_log.txt"
+
+    LOG = open("./log.txt", "w")
+    ini_time = datetime.now()
+    LOG.write(f"Init time: {ini_time}\n\n")
+    LOG.write(f"Tensorflow version: {tf.__version__}\n")
 
     # Pull the list of files
     train_df = pd.read_csv(ARGS.data_csv)
