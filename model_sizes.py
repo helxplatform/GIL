@@ -40,7 +40,7 @@ def main():
     parser.add_argument("--image_height", help="Height of images (pixels)", required=True, type=int, default=512)
     parser.add_argument("--image_width", help="Width of images (pixels)", required=True, type=int, default=512)
     parser.add_argument("--image_channels", help="Number of channels", required=True, type=int, default=1)
-    parser.add_argument("--classes", help="Number of classes", type=int, default=None)
+    parser.add_argument("--classes", help="Number of classes", type=int, default=2)
     parser.add_argument("--cross_dev_ops", help="Cross device operation to use for multi-GPU reduction. 'all' = NcclAllReduce, 'hierarchical' = HierarchicalCopyAllReduce, 'one' = ReductionToOneDevice", type=str, choices=["all", "hierarchical", "one"], default="hierarchical")
     ARGS = parser.parse_args()
 
