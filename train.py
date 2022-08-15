@@ -38,8 +38,6 @@ def model_config():
         "resnet152v2": tf.keras.applications.ResNet152V2,
         "resnet50": tf.keras.applications.ResNet50,
         "resnet50v2": tf.keras.applications.ResNet50V2,
-        "vgg16": tf.keras.applications.VGG16,
-        "vgg19": tf.keras.applications.VGG19,
         "xception": tf.keras.applications.Xception
     }
 
