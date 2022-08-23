@@ -74,8 +74,8 @@ def model_config():
 def split_and_resize(images, labels, test_ratio, input_shape=(512, 512, 1), auto_resize=False, index_first=False, log=None):
     train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 
-    training_set = ImageSet(train_images, train_labels, index_first)
-    validation_set = ImageSet(test_images, test_labels, index_first)
+    training_set = ImageSet(images=train_images, labels=train_labels, mode="classify", index_first=index_first)
+    validation_set = ImageSet(images=test_images, labels=test_labels, mode="classify", index_first=index_first)
 
     min_height = min([training_set.min_height, validation_set.min_height])
     min_width = min([training_set.min_width, validation_set.min_width])
