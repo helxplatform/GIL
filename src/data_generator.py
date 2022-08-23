@@ -5,7 +5,7 @@ import tensorflow as tf
 
 class ImageSet:
     """An image stack dataset for batch generation in TensorFlow"""
-    def __init__(self, images, labels, input_shape=None, index_first=False):
+    def __init__(self, images, labels, mode, input_shape=None, index_first=False):
         """
         Constructs an ImageSet from a list of stack files.
 
@@ -13,7 +13,7 @@ class ImageSet:
             images : list
                 List of image file paths
             labels : list
-                List of labels (one per stack)
+                List of labels
             index_first : bool
                 Defaults to False. Set True if the depth index
                 is first in the image size (not common)
@@ -23,6 +23,8 @@ class ImageSet:
                 Minimum image height in set
             min_width : int
                 Minimum image width in set
+            mode : str
+                Model mode (classify, segment)
             input_shape : tuple
                 (height, width, channel) of image
         """
@@ -33,6 +35,7 @@ class ImageSet:
         self.count = None
         self.min_height = None
         self.min_width = None
+        self.mode = mode
         self.get_sizes()
 
 
@@ -97,14 +100,25 @@ class ImageSet:
                 batch_array = img_array[..., slice_num]
             else:
                 batch_array = img_array[slice_num, ...]
+
+            if self.mode == "classify":
+                batch_label = img_label
+            elif self.mode == "segment":
+                if self.index_first:
+                    batch_label = img_label[..., slice_num]
+                else:
+                    batch_label = img_label[slice_num, ...]
+
             slice_num += 1
 
             # Convert to tensor
             batch_array = np.array(batch_array)
             batch_tensor = tf.convert_to_tensor(batch_array)
+            batch_label = np.array(batch_label)
+            batch_label = tf.convert_to_tensor(batch_label)
 
             # Yield to the calling function
-            yield (batch_tensor, img_label)
+            yield (batch_tensor, batch_label)
 
 
     def generate_batches(self, batch_size):
@@ -169,7 +183,19 @@ class ImageSet:
         # Normalize 0-1 and get label
         img_array = (img_array - np.min(img_array))/(np.max(img_array) - np.min(img_array))
         # Pull label
-        img_label = self.labels[file_index]
+        
+        if self.mode == "classify":
+            img_label = self.labels[file_index]
+        elif self.mode == "segment":
+            label_masks = sitk.ReadImage(self.labels[file_index])
+            img_label = sitk.GetArrayFromImage(label_masks)
+            img_label = np.expand_dims(img_label, 3)
+            img_label = tf.image.resize(img_label, [height,width]).numpy()
+
+        #try:
+        #    img_label = self.mode_label_dict[self.mode]
+        #except KeyError as e:
+        #    raise ValueError(f"Invalid mode '{self.mode}'. Use 'classify' or 'segment'.") from e
 
         # If not at the end of the file list, queue the next stack; otherwise loop to the beginning
         if file_index < len(self.images)-1:
