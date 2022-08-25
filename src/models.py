@@ -35,7 +35,7 @@ def unet(
         dropout=0.5,
         filters=64,
         output_activation='sigmoid', # 'sigmoid' or 'softmax'
-        weights_path=None, # Load weights for model from file
+        weights=None, # Load weights for model from file
         loss='binary_crossentropy',
         optimizer=tf.keras.optimizers.SGD(lr=0.01, momentum=0.99),
         num_layers=4):
@@ -65,8 +65,8 @@ def unet(
     outputs = tf.keras.layers.Conv2D(num_classes, (1, 1), activation=output_activation)(x)
     model = tf.keras.models.Model(inputs=[inputs], outputs=[outputs])
 
-    if weights_path:
-        model.load_weights(weights_path)
+    if weights:
+        model.load_weights(weights)
 
     return model
 
