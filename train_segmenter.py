@@ -131,7 +131,7 @@ def main():
 
     # Build the model
     classifier_activation = 'sigmoid'
-    loss_type = 'sparse_categorical_crossentropy'
+    loss_type = 'MSE'
     lst_metrics = ['sparse_categorical_accuracy']
     lr_rate = 0.01
 
@@ -155,7 +155,7 @@ def main():
         model.compile(
             loss=loss_type,
             optimizer=opt,
-            metrics=lst_metrics,
+            #metrics=lst_metrics,
             run_eagerly=ARGS.run_eagerly)
 
     # Print Model Summary
