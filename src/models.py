@@ -28,19 +28,17 @@ def build_image_classifier(base_model, classes, input_shape=(512, 512, 1), class
 # UNet Keras implementation
 def unet(
         metrics, # No default value; must be defined as part of the MirroredStrategy to use multiple GPUs
-        input_height=512,
-        input_width=512,
-        input_channels=1, # Grayscale = 1, color = 3 for RGB
+        input_shape=(512, 512, 1),
         classes=1,
         dropout=0.5,
         filters=64,
-        output_activation='sigmoid', # 'sigmoid' or 'softmax'
+        classifier_activation='sigmoid', # 'sigmoid' or 'softmax'
         weights=None, # Load weights for model from file
         loss='binary_crossentropy',
         optimizer=tf.keras.optimizers.SGD(lr=0.01, momentum=0.99),
-        num_layers=4):
+        num_layers=4,
+        **kwargs):
     # Create input from dimensions
-    input_shape = (input_height, input_width, input_channels)
     inputs = tf.keras.layers.Input(input_shape)
     x = inputs
 
@@ -62,7 +60,7 @@ def unet(
         x = tf.keras.layers.Concatenate()([x, conv])
         x = conv2d_block(inputs=x, filters=filters)
 
-    outputs = tf.keras.layers.Conv2D(classes, (1, 1), activation=output_activation)(x)
+    outputs = tf.keras.layers.Conv2D(classes, (1, 1), activation=classifier_activation)(x)
     model = tf.keras.models.Model(inputs=[inputs], outputs=[outputs])
 
     if weights:
