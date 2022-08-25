@@ -68,8 +68,6 @@ def unet(
     if weights_path:
         model.load_weights(weights_path)
 
-    model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-
     return model
 
 
