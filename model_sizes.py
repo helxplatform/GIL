@@ -90,6 +90,7 @@ def main():
         # Determine batch size if auto-batch enabled
         # Auto-batch will not run if no GPU present
         _ = get_max_batch_size(model, unit="mebi", log=LOG)
+        LOG.write("\n")
 
     LOG.close()
 
