@@ -31,7 +31,7 @@ def unet(
         input_height=512,
         input_width=512,
         input_channels=1, # Grayscale = 1, color = 3 for RGB
-        num_classes=1,
+        classes=1,
         dropout=0.5,
         filters=64,
         output_activation='sigmoid', # 'sigmoid' or 'softmax'
@@ -62,7 +62,7 @@ def unet(
         x = tf.keras.layers.Concatenate()([x, conv])
         x = conv2d_block(inputs=x, filters=filters)
 
-    outputs = tf.keras.layers.Conv2D(num_classes, (1, 1), activation=output_activation)(x)
+    outputs = tf.keras.layers.Conv2D(classes, (1, 1), activation=output_activation)(x)
     model = tf.keras.models.Model(inputs=[inputs], outputs=[outputs])
 
     if weights:
