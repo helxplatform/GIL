@@ -100,7 +100,7 @@ def main():
     # Pull the list of files
     train_df = pd.read_csv(ARGS.data_csv)
     images = [os.path.join(ARGS.data_dir, name) for name in train_df[ARGS.image_column].to_list()]
-    labels = train_df[ARGS.label_column].to_list()
+    labels = [os.path.join(ARGS.data_dir, name) for name in train_df[ARGS.label_column].to_list()]
 
     if ARGS.classes is None:
         #classes = len(np.unique(labels))
