@@ -27,15 +27,12 @@ def build_image_classifier(base_model, classes, input_shape=(512, 512, 1), class
 
 # UNet Keras implementation
 def unet(
-        metrics, # No default value; must be defined as part of the MirroredStrategy to use multiple GPUs
         input_shape=(512, 512, 1),
         classes=1,
         dropout=0.5,
         filters=64,
         classifier_activation='sigmoid', # 'sigmoid' or 'softmax'
         weights=None, # Load weights for model from file
-        loss='binary_crossentropy',
-        optimizer=tf.keras.optimizers.SGD(lr=0.01, momentum=0.99),
         num_layers=4,
         **kwargs):
     # Create input from dimensions
