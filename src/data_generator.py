@@ -189,6 +189,11 @@ class ImageSet:
         elif self.mode == "segment":
             label_masks = sitk.ReadImage(self.labels[file_index])
             img_label = sitk.GetArrayFromImage(label_masks)
+            
+            if len(img_label.shape) == 4:
+                label_masks = self._rgb_to_gray(label_masks)
+                img_label = sitk.GetArrayFromImage(label_masks)
+                
             img_label = np.expand_dims(img_label, 3)
             img_label = tf.image.resize(img_label, [height,width]).numpy()
 
