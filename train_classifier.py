@@ -189,9 +189,7 @@ def main():
     if not ARGS.auto_batch or not tf.config.list_physical_devices('GPU'):
         batch_size = ARGS.batch_size
     else:
-        batch_size = get_max_batch_size(model, unit="mebi", log=LOG)    
-
-    batch_size -= 1
+        batch_size = get_max_batch_size(model, unit="mebi", log=LOG)
 
     # Initialize settings for training
     train_steps = int(np.ceil(training_set.count / batch_size))
