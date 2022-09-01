@@ -150,7 +150,8 @@ def main():
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
-    LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
+    gpu_count = strategy.num_replicas_in_sync
+    LOG.write(f"Number of devices: {gpu_count}\n")
 
     # Build the model
     classifier_activation = 'sigmoid'
@@ -189,7 +190,7 @@ def main():
     if not ARGS.auto_batch or not tf.config.list_physical_devices('GPU'):
         batch_size = ARGS.batch_size
     else:
-        batch_size = get_max_batch_size(model, unit="mebi", log=LOG)
+        batch_size = get_max_batch_size(model, gpu_count, unit="mebi", log=LOG)
 
     # Initialize settings for training
     train_steps = int(np.ceil(training_set.count / batch_size))
