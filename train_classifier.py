@@ -63,7 +63,7 @@ def model_config():
     parser.add_argument("--cross_dev_ops", help="Cross device operation to use for multi-GPU reduction. 'all' = NcclAllReduce, 'hierarchical' = HierarchicalCopyAllReduce, 'one' = ReductionToOneDevice", type=str, choices=["all", "hierarchical", "one"], default="all")
     parser.add_argument("--instance_type", help="Instance type for logging purposes", type=str, default=None)
     parser.add_argument("--batch_by_gpu", help="Round batch size to multiple of GPU count", type="store_true")
-    parser.add_argument("--bin_batches", help="Round batch size down to nearest 2^n", type="store_true)
+    parser.add_argument("--bin_batches", help="Round batch size down to nearest 2^n", type="store_true")
     args = parser.parse_args()
 
     if args.arch not in model_dict:
