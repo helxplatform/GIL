@@ -1,5 +1,6 @@
 """ Train VGG on image data """
 import os
+import atexit
 from datetime import datetime
 import argparse
 import tensorflow as tf
@@ -253,6 +254,8 @@ def main():
     LOG.write(f"Total elapsed: {end_time - ini_time}")
 
     LOG.close()
+    
+    atexit.register(strategy._extended._collective_ops._pool.close) # type: ignore
 
 if __name__ == '__main__':
     main()
