@@ -1,5 +1,6 @@
 """ Train image segmentation model """
 import os
+import atexit
 from datetime import datetime
 import argparse
 import tensorflow as tf
@@ -127,6 +128,7 @@ def main():
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
+    atexit.register(strategy._extended._collective_ops._pool.close) # type: ignore
     LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
 
     # Build the model
