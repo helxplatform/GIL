@@ -153,6 +153,7 @@ def main():
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
+    atexit.register(strategy._extended._collective_ops._pool.close) # type: ignore
     gpu_count = strategy.num_replicas_in_sync
     LOG.write(f"Number of devices: {gpu_count}\n")
 
@@ -254,8 +255,6 @@ def main():
     LOG.write(f"Total elapsed: {end_time - ini_time}")
 
     LOG.close()
-    
-    atexit.register(strategy._extended._collective_ops._pool.close) # type: ignore
 
 if __name__ == '__main__':
     main()
