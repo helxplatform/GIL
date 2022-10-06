@@ -55,6 +55,7 @@ def main():
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
+    gpu_count = strategy.num_replicas_in_sync
 
     # Build the model
     classifier_activation = 'sigmoid'
@@ -89,7 +90,7 @@ def main():
 
         # Determine batch size if auto-batch enabled
         # Auto-batch will not run if no GPU present
-        _ = get_max_batch_size(model, unit="mebi", log=LOG)
+        _ = get_max_batch_size(model, gpu_count, unit="mebi", log=LOG)
         LOG.write("\n")
 
     LOG.close()
