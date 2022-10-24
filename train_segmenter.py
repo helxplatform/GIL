@@ -143,7 +143,6 @@ def main():
     with strategy.scope():
         model = base_model(
             backbone_name="resnet50",
-            metrics=None,
             encoder_weights=None,
             classes=classes,
             input_shape=input_shape,
