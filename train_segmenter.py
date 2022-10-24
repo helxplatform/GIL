@@ -17,7 +17,7 @@ def model_config():
     """ Parse arguments and pull selected Keras application """
     # Available Keras application models
     model_dict = {
-        "unet": sm.UNet,
+        "unet": sm.Unet,
         "fpn": sm.FPN,
         "linknet": sm.Linknet,
         "pspnet": sm.PSPNet
