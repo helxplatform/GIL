@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from src.models import unet
+SM_FRAMEWORK=tf.keras
+import segmentation_models as sm
+
 from src.utility import EpochTimeCallback, get_max_batch_size
 from src.data_generator import ImageSet
 
@@ -15,7 +17,10 @@ def model_config():
     """ Parse arguments and pull selected Keras application """
     # Available Keras application models
     model_dict = {
-        "unet": unet,
+        "unet": sm.UNet,
+        "fpn": sm.FPN,
+        "linknet": sm.Linknet,
+        "pspnet": sm.PSPNet
     }
 
     # Parse command line arguments
@@ -136,20 +141,13 @@ def main():
     lr_rate = 0.01
 
     with strategy.scope():
-        #model = build_image_classifier(
-        #    base_model=base_model,
-        #    classes=classes,
-        #    input_shape=input_shape,
-        #    classifier_activation=classifier_activation,
-        #    dropout=0.1)
-
         model = base_model(
+            backbone_name="resnet50",
             metrics=None,
-            weights=None,
+            encoder_weights=None,
             classes=classes,
             input_shape=input_shape,
-            classifier_activation=classifier_activation,
-            include_top=True)
+            activation=classifier_activation)
 
         opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
 
