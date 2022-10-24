@@ -136,7 +136,7 @@ def main():
 
     # Build the model
     classifier_activation = 'sigmoid'
-    loss_type = 'MSE'
+    loss_type = sm.losses.bce_jaccard_loss
     lst_metrics = ['sparse_categorical_accuracy']
     lr_rate = 0.01
 
