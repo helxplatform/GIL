@@ -134,7 +134,9 @@ def main():
     }
     strategy = tf.distribute.MirroredStrategy(
         cross_device_ops=cdo_dict[ARGS.cross_dev_ops])
-    LOG.write(f"Number of devices: {strategy.num_replicas_in_sync}\n")
+    atexit.register(strategy._extended._collective_ops._pool.close) # type: ignore
+    gpu_count = strategy.num_replicas_in_sync
+    LOG.write(f"Number of devices: {gpu_count}\n")
 
     # Build the model
     classifier_activation = 'sigmoid'
