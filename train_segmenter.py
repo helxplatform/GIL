@@ -1,5 +1,6 @@
 """ Train image segmentation model """
 import os
+import atexit
 from datetime import datetime
 import argparse
 import tensorflow as tf
