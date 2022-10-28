@@ -45,7 +45,7 @@ def main():
     input_shape = (ARGS.image_height, ARGS.image_width, ARGS.image_channels)
 
     for arch, base_model in model_dict.items():
-        LOG.write(f"Model: {arch}\n")
+        LOG.write(f"Model: {arch}_{ARGS.backbone}\n")
         with strategy.scope():
             #model = build_image_classifier(
             #    base_model=base_model,
