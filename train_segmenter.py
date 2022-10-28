@@ -47,6 +47,7 @@ def model_config():
     parser.add_argument("--instance_type", help="Instance type for logging purposes", type=str, default=None)
     parser.add_argument("--batch_by_gpu", help="Round batch size to multiple of GPU count", action="store_true")
     parser.add_argument("--bin_batches", help="Round batch size down to nearest 2^n", action="store_true")
+    parser.add_argument("--backbone", help="Backbone architecture", type=str, default="resnet50")
     args = parser.parse_args()
 
     if args.arch.lower() not in model_dict:
@@ -147,7 +148,7 @@ def main():
 
     with strategy.scope():
         model = base_model(
-            backbone_name="resnet50",
+            backbone_name=ARGS.backbone,
             encoder_weights=None,
             classes=classes,
             input_shape=input_shape,
