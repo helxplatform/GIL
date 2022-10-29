@@ -157,7 +157,7 @@ def unet_3d(
         x = tf.keras.layers.Concatenate()([x, conv])
         x = conv3d_block(inputs=x, filters=filters)
 
-    outputs = tf.keras.layers.Conv3D(num_classes, (1, 1, 1), activation=classifier_activation)(x)
+    outputs = tf.keras.layers.Conv3D(classes, (1, 1, 1), activation=classifier_activation)(x)
     model = tf.keras.models.Model(inputs=[inputs], outputs=[outputs])
 
     if weights:
