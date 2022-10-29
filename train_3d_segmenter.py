@@ -146,11 +146,11 @@ def main():
 
     with strategy.scope():
         model = base_model(
-            backbone_name="resnet50",
-            encoder_weights=None,
+            weights=None,
             classes=classes,
             input_shape=input_shape,
-            activation=classifier_activation)
+            classifier_activation=classifier_activation,
+            include_top=True)
 
         opt = tf.keras.optimizers.Adam(learning_rate=lr_rate)
 
