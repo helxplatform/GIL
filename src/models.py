@@ -136,8 +136,8 @@ def unet_3d(
         num_layers=4,
         **kwargs):
     # Create input from dimensions
-    x = tf.keras.layers.Input(input_shape)
-    #x = inputs
+    inputs = tf.keras.layers.Input(input_shape)
+    x = inputs
 
     down_layers = []
     for l in range(num_layers):
