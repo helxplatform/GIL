@@ -12,7 +12,7 @@ SM_FRAMEWORK=tf.keras
 import segmentation_models as sm
 
 from src.utility import EpochTimeCallback, get_max_batch_size
-from src.data_generator import ImageSet
+from src.data_generator import VoxelSet
 from src.models import unet_3d
 
 def model_config():
