@@ -33,6 +33,7 @@ def model_config():
     parser.add_argument("--epochs", help="Number of epochs. Default is 15", type=int, default=15)
     parser.add_argument("--classes", help="Number of classes. If not specified, classes will be inferred from labels", type=int, default=None)
     parser.add_argument("--batch_size", help="Training batch size. Default is 8", type=int, default=8)
+    parser.add_argument("--image_depth", help="Depth of images (pixels)", type=int, default=1)
     parser.add_argument("--image_height", help="Height of images (pixels)", type=int, default=512)
     parser.add_argument("--image_width", help="Width of images (pixels)", type=int, default=512)
     parser.add_argument("--image_channels", help="Number of channels", type=int, default=1)
@@ -120,7 +121,7 @@ def main():
         images=images,
         labels=labels,
         test_ratio=ARGS.test_ratio,
-        input_shape=(ARGS.image_height, ARGS.image_width, ARGS.image_channels),
+        input_shape=(ARGS.image_depth, ARGS.image_height, ARGS.image_width, ARGS.image_channels),
         auto_resize=ARGS.auto_resize,
         index_first=ARGS.index_first,
         log=LOG)
