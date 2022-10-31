@@ -1,5 +1,6 @@
 """ COPDGene training data generator """
 import numpy as np
+from scipy.ndimage import zoom
 import SimpleITK as sitk
 import tensorflow as tf
 
@@ -343,7 +344,11 @@ class VoxelSet:
         # Load stack file
         img = sitk.ReadImage(self.images[file_index])
         img_array = sitk.GetArrayFromImage(img)
-        img_array = tf.image.resize(img_array, [height,width]).numpy()
+        depth_factor = depth/img_array.shape[0]
+        height_factor = height/img_array.shape[1]
+        width_factor = width/img_array.shape[2]
+        img_array = zoom(img_array, (depth_factor, height_factor, width_factor))
+        #img_array = tf.image.resize(img_array, [height,width]).numpy()
         #temp_array = sitk.GetArrayFromImage(img)
         #img_array = np.ndarray((depth, height, width))
         #for i in range(temp_array.shape[0]):
@@ -358,7 +363,8 @@ class VoxelSet:
         elif self.mode == "segment":
             label_masks = sitk.ReadImage(self.labels[file_index])
             img_label = sitk.GetArrayFromImage(label_masks)
-            img_label = tf.image.resize(img_label, [height,width]).numpy()
+            img_label = zoom(img_label, (depth_factor, height_factor, width_factor))
+            #img_label = tf.image.resize(img_label, [height,width]).numpy()
             #temp_label = sitk.GetArrayFromImage(label_masks)
             #img_label = np.ndarray((depth, height, width))
             #for i in range(temp_array.shape[0]):
