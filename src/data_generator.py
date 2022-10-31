@@ -322,18 +322,12 @@ class VoxelSet:
             img_array, img_label, file_index = self.process_next_stack(file_index, height, width, depth)
 
             # Extract slice and label
-            if self.index_first:
-                batch_array = img_array[..., slice_num]
-            else:
-                batch_array = img_array[slice_num, ...]
+            batch_array = img_array
 
             if self.mode == "classify":
-                batch_label = img_label
+                batch_label = img_label # TODO: Define for classification
             elif self.mode == "segment":
-                if self.index_first:
-                    batch_label = img_label[..., slice_num]
-                else:
-                    batch_label = img_label[slice_num, ...]
+                batch_label = img_label
 
             # Convert to tensor
             batch_array = np.array(batch_array)
