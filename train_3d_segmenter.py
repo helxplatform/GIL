@@ -171,6 +171,7 @@ def main():
         batch_size = ARGS.batch_size
     else:
         batch_size = get_max_batch_size(model, gpu_count, unit="mebi", log=LOG, batch_by_gpu=ARGS.batch_by_gpu, bin_batches=ARGS.bin_batches)
+        batch_size -= 1
 
     # Initialize settings for training
     train_steps = int(np.ceil(training_set.count / batch_size))
